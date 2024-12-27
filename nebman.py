@@ -13,30 +13,26 @@ def initDB():
 # initialise a new DB for nebman or print contents if it exists.
     nebmanDB='nebmanDB.db'
 
-# check if database file exists, if it does print all content (for troubleshooting)
-    if os.path.exists(nebmanDB):
-        dbConnect = sqlite3.connect(nebmanDB)
-        dbCurser = dbConnect.cursor()
-        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
-        print(dbContent.fetchall())
-        #dbContent = dbCurser.execute("SELECT * FROM projectZeroTickers")
-        #print(dbContent.fetchall())
-        dbConnect.close()
-        ##sys.exit()
-    # if the database file doesn't exist create required table
-    else:
+    # check if database file exists, if not, create it.
+    if not os.path.exists(nebmanDB):
         dbConnect = sqlite3.connect(nebmanDB)
         dbCurser = dbConnect.cursor()
         dbCurser.execute("CREATE TABLE nebmanClients(id, hostname, network, lighthouse, os, services, version, UNIQUE(hostname))")
         dbConnect.commit()
-        #dbCurser.execute("CREATE TABLE projectZeroTickers(date, ticker, status)")
-        #dbConnect.commit()
         dbConnect.close()
-        # confirm DB exists (in case create above failed/ did not complete)
+        # confirm DB exists, in case create above failed/ did not complete.
         if not os.path.exists(nebmanDB):
             sys.exit("Database does not exist, exiting")
+    # if the file exists print all content (for troubleshooting)
+    else:
+        dbConnect = sqlite3.connect(nebmanDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        print(dbContent.fetchall())
+        dbConnect.close()
 
 def pullNebula():
+    # Set file variables, concentrating on Linux for initial build
     nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
     nebulaLinuxDL="nebula-linux-amd64.tar.gz"
     nebulaLinuxCurrent="nebula-linux.tar.gz"
@@ -56,7 +52,15 @@ def pullNebula():
             nebulaTar.extractall(filter='data')
             nebulaTar.close()
 
-        
+# Display all clients in the DB
+def listClients():
+
+        nebmanDB='nebmanDB.db'
+        dbConnect = sqlite3.connect(nebmanDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        print(dbContent.fetchall())
+        dbConnect.close()   
 
 
 
