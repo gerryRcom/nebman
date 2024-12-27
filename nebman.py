@@ -4,10 +4,10 @@
 import os.path
 import sqlite3
 import sys
-print("hey")
 
 
 def initDB():
+
 # initialise a new DB for nebman or print contents if it exists.
     nebmanDB='nebmanDB.db'
 
@@ -25,7 +25,7 @@ def initDB():
     else:
         dbConnect = sqlite3.connect(nebmanDB)
         dbCurser = dbConnect.cursor()
-        dbCurser.execute("CREATE TABLE nebmanClients(UNIQUE(hostname), id, network, lighthouse, os, services, version)")
+        dbCurser.execute("CREATE TABLE nebmanClients(id, hostname, network, lighthouse, os, services, version, UNIQUE(hostname))")
         dbConnect.commit()
         #dbCurser.execute("CREATE TABLE projectZeroTickers(date, ticker, status)")
         #dbConnect.commit()
@@ -35,3 +35,8 @@ def initDB():
             sys.exit()
         else:
             sys.exit("Database does not exist, exiting")
+
+
+
+initDB()
+
