@@ -4,7 +4,9 @@
 import os.path
 import sqlite3
 import sys
-
+import requests
+import shutil
+import tarfile
 
 def initDB():
 
@@ -20,7 +22,7 @@ def initDB():
         #dbContent = dbCurser.execute("SELECT * FROM projectZeroTickers")
         #print(dbContent.fetchall())
         dbConnect.close()
-        sys.exit()
+        ##sys.exit()
     # if the database file doesn't exist create required table
     else:
         dbConnect = sqlite3.connect(nebmanDB)
@@ -31,12 +33,33 @@ def initDB():
         #dbConnect.commit()
         dbConnect.close()
         # confirm DB exists (in case create above failed/ did not complete)
-        if os.path.exists(nebmanDB):
-            sys.exit()
-        else:
+        if not os.path.exists(nebmanDB):
             sys.exit("Database does not exist, exiting")
+
+def pullNebula():
+    nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
+    nebulaLinuxDL="nebula-linux-amd64.tar.gz"
+    nebulaLinuxCurrent="nebula-linux.tar.gz"
+    nebulaFile="nebula"
+    nebulaCertFile="nebula-cert"
+    # If Nebula download doesn't exist, download it.
+    if not os.path.exists(nebulaLinuxDL):
+        response = requests.get(nebulaLinuxURL)
+        response.raw.decode_content = True
+        with open(nebulaLinuxDL, 'wb') as fileDL:
+            for block in response.iter_content(chunk_size=1024):
+                fileDL.write(block)
+            fileDL.close()
+        # If Nebula binary doesn't exist, extract the tar.
+        if not os.path.exists(nebulaFile):
+            nebulaTar = tarfile.open(nebulaLinuxDL)
+            nebulaTar.extractall(filter='data')
+            nebulaTar.close()
+
+        
 
 
 
 initDB()
+pullNebula()
 
