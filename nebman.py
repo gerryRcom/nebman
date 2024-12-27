@@ -13,13 +13,12 @@ NEBMANDB='nebmanDB.db'
 CURRENTVERSION='1.9.5'
 
 # Set global variables
-lighthouseID = 10
-endpointID = 50
+existingLighthouseID = 10
+existingEndpointID = 50
+existingNetwork = ""
 
+# initialise a new DB for nebman or load settings if existing DB and contents are located.
 def initDB():
-
-# initialise a new DB for nebman or print contents if it exists.
-    
     # check if database file exists, if not, create it.
     if not os.path.exists(NEBMANDB):
         dbConnect = sqlite3.connect(NEBMANDB)
@@ -30,8 +29,25 @@ def initDB():
         # confirm DB exists, in case create above failed/ did not complete.
         if not os.path.exists(NEBMANDB):
             sys.exit("Database does not exist, exiting")
-    # if database does exist set ID values
+    # if database does exist set required values
+    else:
+        # Reference the global variables 
+        global existingLighthouseID
+        global existingEndpointID
+        global existingNetwork
 
+        dbConnect = sqlite3.connect(NEBMANDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        for row in dbContent:
+            if row[3] == 'y':
+                existingNetwork = row[2]
+                if row[0] > existingLighthouseID:
+                    existingLighthouseID = row[0]
+            else:
+                if row[0] > existingEndpointID:
+                    existingEndpointID = row[0]
+            
 def pullNebula():
     # Set file variables, concentrating on Linux for initial build
     nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
@@ -72,9 +88,9 @@ def addClient():
 
     # Set new ID value based on endpoint type
     if newLighthouse == 'y':
-        newID = lighthouseID
+        newID = existingLighthouseID + 1
     else:
-        newID = endpointID
+        newID = existingEndpointID + 1
 
     # If DB doesn't exist, exit the app, otherwise create new entry in the DB
     if not os.path.exists(NEBMANDB):
@@ -95,6 +111,8 @@ if __name__ == "__main__":
     print("---------------------------------")
     print("1 - View current clients in the DB")
     print("2 - Add new client in the DB")
+    print("3 - Generate certs for an endpoint in the DB")
+    print("99 - Generate certs everything in the DB")
     print("---------------------------------")
     menuChoice = input("Please select from the menu above: ")
 
@@ -102,6 +120,10 @@ if __name__ == "__main__":
         listClients()
     elif menuChoice == '2':
         addClient()
+    elif menuChoice == '3':
+        listClients()
+    elif menuChoice == '99':
+        listClients()
 
     
 
