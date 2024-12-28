@@ -16,7 +16,7 @@ CURRENTVERSION='1.9.5'
 # Set global variables
 existingLighthouseID = 10
 existingEndpointID = 50
-existingNetwork = ""
+existingNetwork = "notset"
 
 # initialise a new DB for nebman or load settings if existing DB and contents are located.
 def initDB():
@@ -113,9 +113,40 @@ def endpointCertGen(certType):
 
     # new endpoint cert generation
     if certType == '1':
-        print("2")
+        if existingNetwork == "notset":
+            print("No endpoints exist in the DB, please add at least one")
+        #  check if ca eists and if it doesn't request that it be generated
+        elif not os.path.exists('certs/ca.crt') or not os.path.exists('certs/ca.key'):
+            print ("CA cert does not exist, please generate one first.")
+        else:
+            x = 0
+            y = 0
+            dbConnect = sqlite3.connect(NEBMANDB)
+            dbCurser = dbConnect.cursor()
+            dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+            print("Generating cert for endpoint")
+            print("----------------------------------")
+            for row in dbContent:
+                print(str(x) +" - "+row[1])
+                x+=1
+            # Close DB connection
+            dbConnect.close()
+            endpointSelection = input("Select an endpoint from list above (0, 1 ..): ")
 
-
+            dbConnect = sqlite3.connect(NEBMANDB)
+            dbCurser = dbConnect.cursor()
+            dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+            for row in dbContent:
+                if endpointSelection == str(y):
+                    newEndpointCertCmd="./nebula-cert sign -ca-crt ./certs/ca.crt -ca-key ./certs/ca.key -out-crt ./certs/" +row[1]+ ".crt -out-key ./certs/" +row[1]+ ".key -name " +row[1]+ " -ip " + existingNetwork + "." + str(row[0]) + "/24"
+                    subprocess.call(newEndpointCertCmd, shell=True)
+                    #print(newEndpointCertCmd)
+                    break
+                else:
+                    y+=1
+            # Close DB connection
+            dbConnect.close()
+            
     elif certType == '2':
         print("2")
 
@@ -123,14 +154,13 @@ def endpointCertGen(certType):
     elif certType == '99':
         #  check if ca eists and if it does request that it be deleted
         if os.path.exists('certs/ca.crt') or os.path.exists('certs/ca.key'):
-            print ("ca cert alrady exists, you need to manulally delete cert and key first.")
+            print ("CA cert alrady exists, you need to manually delete CA cert and key first.")
         else:
             print("Generating initial CA cert for org")
             print("----------------------------------")
             orgName = input("Please enter org name: ")
             newOrgCertCmd = "./nebula-cert ca -out-crt ./certs/ca.crt -out-key ./certs/ca.key -name \""+orgName+"\""
             subprocess.call(newOrgCertCmd, shell=True)
-
     else:
         print("invalid choice")
 
@@ -153,7 +183,7 @@ if __name__ == "__main__":
     elif menuChoice == '3':
         endpointCertGen("99")
     elif menuChoice == '4':
-        listClients()
+        endpointCertGen("1")
     elif menuChoice == '99':
         listClients()
 
