@@ -2,6 +2,7 @@
 ## 
 ## required imports
 import os.path
+import subprocess
 import sqlite3
 import sys
 import requests
@@ -71,11 +72,11 @@ def pullNebula():
 
 # Display all clients in the DB
 def listClients():
-        dbConnect = sqlite3.connect(NEBMANDB)
-        dbCurser = dbConnect.cursor()
-        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
-        print(dbContent.fetchall())
-        dbConnect.close()
+    dbConnect = sqlite3.connect(NEBMANDB)
+    dbCurser = dbConnect.cursor()
+    dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+    print(dbContent.fetchall())
+    dbConnect.close()
 
 def addClient():
     # add client to DB
@@ -105,13 +106,42 @@ def addClient():
         # Close DB connection
         dbConnect.close()
 
+def endpointCertGen(certType):
+    # make certs dir if it doesn't already exist
+    if not os.path.exists('certs'):
+        os.makedirs('certs')
+
+    # new endpoint cert generation
+    if certType == '1':
+        print("2")
+
+
+    elif certType == '2':
+        print("2")
+
+    # new ca cert generation, this should only be done once in most cases
+    elif certType == '99':
+        #  check if ca eists and if it does request that it be deleted
+        if os.path.exists('certs/ca.crt') or os.path.exists('certs/ca.key'):
+            print ("ca cert alrady exists, you need to manulally delete cert and key first.")
+        else:
+            print("Generating initial CA cert for org")
+            print("----------------------------------")
+            orgName = input("Please enter org name: ")
+            newOrgCertCmd = "./nebula-cert ca -out-crt ./certs/ca.crt -out-key ./certs/ca.key -name \""+orgName+"\""
+            subprocess.call(newOrgCertCmd, shell=True)
+
+    else:
+        print("invalid choice")
+
 if __name__ == "__main__":
     initDB()
     pullNebula()
     print("---------------------------------")
     print("1 - View current clients in the DB")
     print("2 - Add new client in the DB")
-    print("3 - Generate certs for an endpoint in the DB")
+    print("3 - Generate new CA cert for organisation")
+    print("4 - Generate certs for an endpoint in the DB")
     print("99 - Generate certs everything in the DB")
     print("---------------------------------")
     menuChoice = input("Please select from the menu above: ")
@@ -121,6 +151,8 @@ if __name__ == "__main__":
     elif menuChoice == '2':
         addClient()
     elif menuChoice == '3':
+        endpointCertGen("99")
+    elif menuChoice == '4':
         listClients()
     elif menuChoice == '99':
         listClients()
