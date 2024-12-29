@@ -41,8 +41,8 @@ def initDB():
         dbCurser = dbConnect.cursor()
         dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
         for row in dbContent:
+            existingNetwork = row[2]
             if row[3] == 'y':
-                existingNetwork = row[2]
                 if row[0] > existingLighthouseID:
                     existingLighthouseID = row[0]
             else:
@@ -140,15 +140,11 @@ def endpointCertGen(certType):
                 if endpointSelection == str(y):
                     newEndpointCertCmd="./nebula-cert sign -ca-crt ./certs/ca.crt -ca-key ./certs/ca.key -out-crt ./certs/" +row[1]+ ".crt -out-key ./certs/" +row[1]+ ".key -name " +row[1]+ " -ip " + existingNetwork + "." + str(row[0]) + "/24"
                     subprocess.call(newEndpointCertCmd, shell=True)
-                    #print(newEndpointCertCmd)
                     break
                 else:
                     y+=1
             # Close DB connection
             dbConnect.close()
-            
-    elif certType == '2':
-        print("2")
 
     # new ca cert generation, this should only be done once in most cases
     elif certType == '99':
@@ -164,6 +160,24 @@ def endpointCertGen(certType):
     else:
         print("invalid choice")
 
+## Cert purge, should only be used in event an entire new set of certs is going to be generated.
+def purgeCerts():
+    if not os.path.exists('certs'):
+        print("No certs found, nothing to do here")
+    else:
+        print("## Warning, this is destructive, ALL CERTS WILL BE DELETED, inc CA ##")
+        confirmChoice = input("Please type yes to confirm you wish to proceed: ")
+        if confirmChoice == "yes":
+            certsDir = "certs/"
+            certFiles = os.listdir(certsDir)
+            # iterate through files and only delete .crt and .key files.
+            for certFile in certFiles:
+                if certFile.endswith(".crt") or certFile.endswith(".key"):
+                    os.remove(os.path.join(certsDir, certFile))
+        else:
+            print("Not confirmed, exiting.")
+
+
 if __name__ == "__main__":
     initDB()
     pullNebula()
@@ -172,7 +186,7 @@ if __name__ == "__main__":
     print("2 - Add new client in the DB")
     print("3 - Generate new CA cert for organisation")
     print("4 - Generate certs for an endpoint in the DB")
-    print("99 - Generate certs everything in the DB")
+    print("99 - Purge all certs")
     print("---------------------------------")
     menuChoice = input("Please select from the menu above: ")
 
@@ -185,7 +199,7 @@ if __name__ == "__main__":
     elif menuChoice == '4':
         endpointCertGen("1")
     elif menuChoice == '99':
-        listClients()
+        purgeCerts()
 
     
 
