@@ -18,6 +18,34 @@ existingLighthouseID = 10
 existingEndpointID = 50
 existingNetwork = "notset"
 
+# terminal colour text codes (found via a so page)
+class bcolors:
+    GREEN = '\033[92m'
+    ORANGE = '\033[93m'
+    RED = '\033[91m'
+    END = '\033[0m'
+    vmTag = ''
+
+# Report on the current state of key elements of the app.
+def checkState():
+    # Does the DB exist
+    if os.path.exists(NEBMANDB):
+        print("- Database is found: " + bcolors.GREEN + "Yes" + bcolors.END)
+    else:
+        print("- Database is found: " + bcolors.RED + "No" + bcolors.END)
+    # Does the Certs folder exist   
+    if os.path.exists('./certs/'):
+        print("- Certs folder is found: " + bcolors.GREEN + "Yes" + bcolors.END)
+    else:
+        print("- Certs folder is found: " + bcolors.RED + "No" + bcolors.END)
+    # Does the CA exist   
+    if os.path.exists('./certs/ca.crt') and os.path.exists('./certs/ca.key'):
+        print("- CA cert and key are found: " + bcolors.GREEN + "Yes" + bcolors.END)
+    else:
+        print("- CA cert and key are found: " + bcolors.RED + "No" + bcolors.END)
+
+
+
 # initialise a new DB for nebman or load settings if existing DB and contents are located.
 def initDB():
     # check if database file exists, if not, create it.
@@ -48,7 +76,12 @@ def initDB():
             else:
                 if row[0] > existingEndpointID:
                     existingEndpointID = row[0]
-            
+
+# Add a function to create ansible directory for inventory file
+def ansibleInit():
+    if not os.path.exists('ansible'):
+        os.makedirs('ansible')
+
 def pullNebula():
     # Set file variables, concentrating on Linux for initial build
     nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
@@ -69,6 +102,8 @@ def pullNebula():
             nebulaTar = tarfile.open(nebulaLinuxDL)
             nebulaTar.extractall(filter='data')
             nebulaTar.close()
+            #shutil.copyfile('./nebula', './ansible/playbooks/files/nebula')
+
 
 # Display all clients in the DB
 def listClients():
@@ -180,7 +215,12 @@ def purgeCerts():
 
 if __name__ == "__main__":
     initDB()
+    ansibleInit()
     pullNebula()
+    print("---------------------")
+    print("Current status of app")
+    print("---------------------")
+    checkState()
     print("---------------------------------")
     print("1 - View current clients in the DB")
     print("2 - Add new client in the DB")
