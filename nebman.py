@@ -10,7 +10,6 @@ import shutil
 import tarfile
 import base64
 
-
 # Set Constants
 NEBMANDB='nebmanDB.db'
 CURRENTVERSION='1.9.5'
@@ -45,7 +44,6 @@ def checkState():
         print("- CA cert and key are found: " + bcolors.GREEN + "Yes" + bcolors.END)
     else:
         print("- CA cert and key are found: " + bcolors.RED + "No" + bcolors.END)
-
 
 
 # initialise a new DB for nebman or load settings if existing DB and contents are located.
@@ -85,10 +83,12 @@ def ansibleInit():
         os.makedirs('ansible')
     if not os.path.exists('ansible/inventory'):
         os.makedirs('ansible/inventory')
-    #if not os.path.exists('ansible'):
-    #    os.makedirs('ansible')
-    #if not os.path.exists('ansible'):
-    #    os.makedirs('ansible')
+    if not os.path.exists('ansible/playbooks'):
+        os.makedirs('ansible/playbooks')
+    if not os.path.exists('ansible/playbooks/templates'):
+        os.makedirs('ansible/playbooks/templates')
+    if not os.path.exists('ansible/playbooks/files'):
+        os.makedirs('ansible/playbooks/files')
 
 def ansibleGen():
     # Generate ansile directory structure if it doesn't exist.
@@ -96,12 +96,28 @@ def ansibleGen():
     # Generate inventory file once database exists
     if not os.path.exists(NEBMANDB):
         sys.exit("Database does not exist, exiting")
+    elif existingNetwork == "notset":
+        sys.exit("Network not configured, please ensure hosts including a lighthouse are defined, exiting")       
     else:
-        # open DB connection and filestream for ansible inventory.ini file
+        # open DB connection and iterate through to find Lighthouse details
+        x = 0
+        dbConnect = sqlite3.connect(NEBMANDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        for row in dbContent:
+            if row[3] == 'y' and x < 1:
+                lighthouseHostname = row[1]
+                lighthouseIP = existingNetwork + "." + str(row[0])
+                x+=1
+        dbConnect.close()
+
+        # open DB connection and filestream for ansible inventory.ini file to find host details
         dbConnect = sqlite3.connect(NEBMANDB)
         dbCurser = dbConnect.cursor()
         dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
         ansIventory = open("ansible/inventory/inventory.ini", "w")
+        for row in dbContent:
+            ansIventory.write(row[1]+" cert_name="+row[1]+" lighthouse_ip="+lighthouseIP+" lighthouse_hostname="+lighthouseHostname+"\n")
         # Write hostnames out to inventory file
         for row in dbContent:
             ansIventory.write(row[1]+" cert_name="+row[1]+"\n")
@@ -303,6 +319,3 @@ if __name__ == "__main__":
         ansibleGen()
     elif menuChoice == '99':
         purgeCerts()
-
-    
-
