@@ -81,6 +81,33 @@ def initDB():
 def ansibleInit():
     if not os.path.exists('ansible'):
         os.makedirs('ansible')
+    if not os.path.exists('ansible/inventory'):
+        os.makedirs('ansible/inventory')
+    #if not os.path.exists('ansible'):
+    #    os.makedirs('ansible')
+    #if not os.path.exists('ansible'):
+    #    os.makedirs('ansible')
+
+def ansibleGen():
+    # Generate ansile directory structure if it doesn't exist.
+    ansibleInit()
+    # Generate inventory file once database exists
+    if not os.path.exists(NEBMANDB):
+        sys.exit("Database does not exist, exiting")
+    else:
+        # open DB connection and filestream for ansible inventory.ini file
+        dbConnect = sqlite3.connect(NEBMANDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        ansIventory = open("ansible/inventory/inventory.ini", "w")
+        # Write hostnames out to inventory file
+        for row in dbContent:
+            ansIventory.write(row[1]+"\n")
+        # Close DB connection and file stream
+        dbConnect.close()
+        ansIventory.close()
+
+
 
 def pullNebula():
     # Set file variables, concentrating on Linux for initial build
@@ -107,11 +134,14 @@ def pullNebula():
 
 # Display all clients in the DB
 def listClients():
-    dbConnect = sqlite3.connect(NEBMANDB)
-    dbCurser = dbConnect.cursor()
-    dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
-    print(dbContent.fetchall())
-    dbConnect.close()
+    if not os.path.exists(NEBMANDB):
+        sys.exit("Database does not exist, exiting")
+    else:
+        dbConnect = sqlite3.connect(NEBMANDB)
+        dbCurser = dbConnect.cursor()
+        dbContent = dbCurser.execute("SELECT * FROM nebmanClients")
+        print(dbContent.fetchall())
+        dbConnect.close()
 
 def addClient():
     # add client to DB
@@ -215,7 +245,6 @@ def purgeCerts():
 
 if __name__ == "__main__":
     initDB()
-    ansibleInit()
     pullNebula()
     print("---------------------")
     print("Current status of app")
@@ -226,6 +255,7 @@ if __name__ == "__main__":
     print("2 - Add new client in the DB")
     print("3 - Generate new CA cert for organisation")
     print("4 - Generate certs for an endpoint in the DB")
+    print("5 - Generate Ansible inventory")
     print("99 - Purge all certs")
     print("---------------------------------")
     menuChoice = input("Please select from the menu above: ")
@@ -238,6 +268,8 @@ if __name__ == "__main__":
         endpointCertGen("99")
     elif menuChoice == '4':
         endpointCertGen("1")
+    elif menuChoice == '5':
+        ansibleGen()
     elif menuChoice == '99':
         purgeCerts()
 
