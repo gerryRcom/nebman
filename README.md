@@ -1,6 +1,8 @@
 # nebman
 Manage Nebula inventory and config generation.
 
+## This is most definitely a WIP, needs much error checking and testing ##
+
 Initial requirement is to simplify roll out of nebula to lab machines so:
 - Add machines to a DB.
 - Download Nebula files.
@@ -16,3 +18,5 @@ Initial version will be deploying to identical Linux machines so some content ca
 - Update Nebula feature.
 - Support for Fedora as an endpoint.
 - Support for Windows as an endpoint.
+
+
