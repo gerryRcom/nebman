@@ -1,7 +1,9 @@
 # nebman
 Manage Nebula inventory and config generation.
 
-## This is most definitely a WIP, needs much error checking and testing ##
+#### This is most definitely a WIP, needs much error checking and testing ####
+
+[Demo/ walkthrough running through initial setup](https://gerryr.com/posts/nebman-nebula-manager/)
 
 Initial requirement is to simplify roll out of nebula to lab machines so:
 - Add machines to a DB.
