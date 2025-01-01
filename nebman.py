@@ -188,7 +188,7 @@ def pullNebula():
             nebulaTar = tarfile.open(nebulaLinuxDL)
             nebulaTar.extractall(filter='data')
             nebulaTar.close()
-            shutil.copyfile('./nebula', './ansible/playbooks/files/nebula')
+            #shutil.copyfile('./nebula', './ansible/playbooks/files/nebula')
 
 
 # Display all clients in the DB
@@ -205,7 +205,7 @@ def listClients():
 def addClient():
     # add client to DB
     newHostname = input("Please enter new hostname (FQDN): ")
-    newNetwork = input("Please enter network address (192.168.1.0): ")
+    newNetwork = input("Please enter network address (192.168.1): ")
     newLighthouse = input("Is this new a lighthouse (y/n): ")
     newOS = input("Please enter OS (Windows, Ubuntu, Fedora): ")
     newServices = input("Please enter comma seperated list of services (ssh,http): ")
