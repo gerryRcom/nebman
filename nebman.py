@@ -180,17 +180,15 @@ def ansibleGen():
     ansNebulaLighthouseConfig.write(ansNebulaConfigLighthouseDecode)
     ansNebulaLighthouseConfig.close()
 
-def pullNebula():
-    # Ref global variable
-    global existingVersion
+def pullNebula(passedURL, update):
     # Set file variables, concentrating on Linux for initial build
-    nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
+    nebulaLinuxURL=passedURL
     nebulaLinuxDL="nebula-linux-amd64.tar.gz"
     nebulaLinuxCurrent="nebula-linux.tar.gz"
     nebulaFile="nebula"
     nebulaCertFile="nebula-cert"
     # If Nebula download doesn't exist, download it.
-    if not os.path.exists(nebulaLinuxDL):
+    if not os.path.exists(nebulaLinuxDL) or update == "yes":
         response = requests.get(nebulaLinuxURL)
         response.raw.decode_content = True
         with open(nebulaLinuxDL, 'wb') as fileDL:
@@ -198,7 +196,7 @@ def pullNebula():
                 fileDL.write(block)
             fileDL.close()
         # If Nebula binary doesn't exist, extract the tar.
-        if not os.path.exists(nebulaFile):
+        if not os.path.exists(nebulaFile) or update == "yes":
             nebulaTar = tarfile.open(nebulaLinuxDL)
             nebulaTar.extractall(filter='data')
             nebulaTar.close()
@@ -314,6 +312,11 @@ def updateNebula():
             print("- Ansible binary found is: " + bcolors.ORANGE + ansVersion + bcolors.END)
     else:
             print("- Ansible binary found is: " + bcolors.RED + "Not found" + bcolors.END)
+    print("---------------------------------")
+    confirmChoice = input("Do you want to download an ubdated version (yes/ no): ")
+    if confirmChoice == "yes":
+        updatedURL = input("PLease paste the full download link from the Nebula releases page: ")
+        pullNebula(updatedURL, "yes")
 
 
 
@@ -337,7 +340,7 @@ def purgeCerts():
 
 if __name__ == "__main__":
     initDB()
-    pullNebula()
+    pullNebula("https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz", "no")
     print("---------------------")
     print("Current status of app")
     print("---------------------")
