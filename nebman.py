@@ -18,6 +18,7 @@ CURRENTVERSION='1.9.5'
 existingLighthouseID = 10
 existingEndpointID = 50
 existingNetwork = "notset"
+existingVersion='Unknown'
 
 # terminal colour text codes (found via a so page)
 class bcolors:
@@ -29,6 +30,8 @@ class bcolors:
 
 # Report on the current state of key elements of the app.
 def checkState():
+    # Ref gobal variable
+    global existingVersion
     # Does the DB exist
     if os.path.exists(NEBMANDB):
         print("- Database is found: " + bcolors.GREEN + "Yes" + bcolors.END)
@@ -44,6 +47,15 @@ def checkState():
         print("- CA cert and key are found: " + bcolors.GREEN + "Yes" + bcolors.END)
     else:
         print("- CA cert and key are found: " + bcolors.RED + "No" + bcolors.END)
+    # Does nebula binary exist and if so what's the version.
+    if os.path.exists('nebula'):
+        getNewVersion="./nebula --version"
+        existingVersion = str(subprocess.check_output(getNewVersion, shell=True))
+        existingVersion = str(existingVersion[11:16])
+        print("- Nebula binary found, version: " + existingVersion)
+    else:
+        print("- Nebula binary note found: " + bcolors.RED + "Not found" + bcolors.END)
+
 
 
 # initialise a new DB for nebman or load settings if existing DB and contents are located.
@@ -127,7 +139,7 @@ def ansibleGen():
         ansIventory.close()
     # Copy nebula binary to Ansible files folder.
     if os.path.exists("nebula"):
-        shutil.copyfile('./nebula', './ansible/playbooks/files/nebula')
+        shutil.copy2('./nebula', './ansible/playbooks/files/nebula')
     # Copy certs to Ansible files folder.
     if os.path.exists("certs"):
         shutil.copytree('certs', './ansible/playbooks/files/certs', dirs_exist_ok=True)
@@ -169,6 +181,8 @@ def ansibleGen():
     ansNebulaLighthouseConfig.close()
 
 def pullNebula():
+    # Ref global variable
+    global existingVersion
     # Set file variables, concentrating on Linux for initial build
     nebulaLinuxURL="https://github.com/slackhq/nebula/releases/download/v1.9.5/nebula-linux-amd64.tar.gz"
     nebulaLinuxDL="nebula-linux-amd64.tar.gz"
@@ -188,8 +202,6 @@ def pullNebula():
             nebulaTar = tarfile.open(nebulaLinuxDL)
             nebulaTar.extractall(filter='data')
             nebulaTar.close()
-            #shutil.copyfile('./nebula', './ansible/playbooks/files/nebula')
-
 
 # Display all clients in the DB
 def listClients():
@@ -284,6 +296,27 @@ def endpointCertGen(certType):
     else:
         print("invalid choice")
 
+def updateNebula():
+    # Ref global variable
+    global existingVersion
+    # Does nebula binary exist in Ansible folder and if so what's the version.
+    print("----------------------")
+    print("Update Nebula Binaries")
+    print("----------------------")
+    if os.path.exists('ansible/playbooks/files/nebula'):
+        getAnsVersion="./ansible/playbooks/files/nebula --version"
+        ansVersion = str(subprocess.check_output(getAnsVersion, shell=True))
+        ansVersion = str(ansVersion[11:16])
+        print("- Existing version found is: " + existingVersion)
+        if existingVersion == ansVersion:
+            print("- Ansible binary found is: " + bcolors.GREEN + ansVersion + bcolors.END)
+        else:
+            print("- Ansible binary found is: " + bcolors.ORANGE + ansVersion + bcolors.END)
+    else:
+            print("- Ansible binary found is: " + bcolors.RED + "Not found" + bcolors.END)
+
+
+
 ## Cert purge, should only be used in event an entire new set of certs is going to be generated.
 def purgeCerts():
     if not os.path.exists('certs'):
@@ -315,6 +348,7 @@ if __name__ == "__main__":
     print("3 - Generate new CA cert for organisation")
     print("4 - Generate certs for an endpoint in the DB")
     print("5 - Generate Ansible inventory")
+    print("6 - Update Nebula version")
     print("99 - Purge all certs")
     print("---------------------------------")
     menuChoice = input("Please select from the menu above: ")
@@ -329,5 +363,7 @@ if __name__ == "__main__":
         endpointCertGen("1")
     elif menuChoice == '5':
         ansibleGen()
+    elif menuChoice == '6':
+        updateNebula()
     elif menuChoice == '99':
         purgeCerts()
